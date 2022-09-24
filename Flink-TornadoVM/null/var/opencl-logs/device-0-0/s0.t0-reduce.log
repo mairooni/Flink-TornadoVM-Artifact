@@ -1,0 +1,9 @@
+2:5:3: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  double d_11; 
+  ^
+2:29:26: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    d_11  =  *((__global double *) ul_10);
+                         ^
+2:31:17: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    *((__global double *) ul_12)  =  d_11;
+                ^

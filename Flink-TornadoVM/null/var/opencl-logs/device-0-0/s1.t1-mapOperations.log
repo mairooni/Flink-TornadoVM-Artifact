@@ -1,0 +1,18 @@
+2:26:5: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    double out;
+    ^
+2:27:5: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    double in;
+    ^
+2:29:5: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    double add;
+    ^
+2:34:26: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+       out = *((__global double *) ((idx * 8) + 24L + ul_1));
+                         ^
+2:37:25: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+       in = *((__global double *) ((8 * idx) + (arrsize*8 + 16)*i + 24L + ul_0));
+                        ^
+2:42:20: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+       *((__global double *) ul_2) = add;
+                   ^

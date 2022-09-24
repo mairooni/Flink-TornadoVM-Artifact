@@ -1,0 +1,18 @@
+3:4:28: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+                   __local double localSums[]) {
+                           ^
+3:11:3: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  double field = *((__global double *) (fieldOffset + 32 * idx + 24L + input));
+  ^
+3:11:30: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  double field = *((__global double *) (fieldOffset + 32 * idx + 24L + input));
+                             ^
+3:21:19: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+      *((__global double *) ul_3) = localSums[localIdx];
+                  ^
+3:69:11: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  __local double localSum1[1024];    // local memory for first reduction
+          ^
+3:70:11: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  __local double localSum2[1024];    // local memory for second reduction
+          ^

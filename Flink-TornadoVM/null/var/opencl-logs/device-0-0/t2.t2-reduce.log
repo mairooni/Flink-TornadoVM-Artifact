@@ -1,0 +1,111 @@
+2:5:3: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  double d_36, d_21, d_37, d_34, d_62, d_42, d_58, d_27, d_59, d_56; 
+  ^
+2:16:11: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  __local double d_2[128];
+          ^
+2:17:11: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+  __local double d_3[128];
+          ^
+2:40:5: error: use of undeclared identifier 'd_21'; did you mean 'd_2'?
+    d_21  =  *((__global double *) ul_20);
+    ^~~~
+    d_2
+2:16:18: note: 'd_2' declared here
+  __local double d_2[128];
+                 ^
+2:40:26: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    d_21  =  *((__global double *) ul_20);
+                         ^
+2:46:5: error: use of undeclared identifier 'd_27'; did you mean 'd_2'?
+    d_27  =  *((__global double *) ul_26);
+    ^~~~
+    d_2
+2:16:18: note: 'd_2' declared here
+  __local double d_2[128];
+                 ^
+2:46:26: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+    d_27  =  *((__global double *) ul_26);
+                         ^
+2:47:19: error: use of undeclared identifier 'd_27'
+    d_2[i_14]  =  d_27;
+                  ^
+2:62:9: error: use of undeclared identifier 'd_34'
+        d_34  =  d_2[i_14];
+        ^
+2:65:18: error: use of undeclared identifier 'd_34'
+        d_37  =  d_34 + d_36;
+                 ^
+2:65:9: error: use of undeclared identifier 'd_37'
+        d_37  =  d_34 + d_36;
+        ^
+2:66:23: error: use of undeclared identifier 'd_37'
+        d_2[i_14]  =  d_37;
+                      ^
+2:67:9: error: use of undeclared identifier 'd_34'
+        d_34  =  d_37;
+        ^
+2:67:18: error: use of undeclared identifier 'd_37'
+        d_34  =  d_37;
+                 ^
+2:85:7: error: use of undeclared identifier 'd_42'; did you mean 'd_2'?
+      d_42  =  d_2[i_14];
+      ^~~~
+      d_2
+2:16:18: note: 'd_2' declared here
+  __local double d_2[128];
+                 ^
+2:91:19: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+      *((__global double *) ul_47)  =  d_42;
+                  ^
+2:91:40: error: use of undeclared identifier 'd_42'
+      *((__global double *) ul_47)  =  d_42;
+                                       ^
+2:100:19: error: use of undeclared identifier 'd_21'
+    d_3[i_48]  =  d_21;
+                  ^
+2:115:9: error: use of undeclared identifier 'd_56'; did you mean 'd_36'?
+        d_56  =  d_3[i_48];
+        ^~~~
+        d_36
+2:5:10: note: 'd_36' declared here
+  double d_36, d_21, d_37, d_34, d_62, d_42, d_58, d_27, d_59, d_56; 
+         ^
+2:117:9: error: use of undeclared identifier 'd_58'
+        d_58  =  d_3[i_57];
+        ^
+2:118:9: error: use of undeclared identifier 'd_59'
+        d_59  =  d_56 + d_58;
+        ^
+2:118:18: error: use of undeclared identifier 'd_56'
+        d_59  =  d_56 + d_58;
+                 ^
+2:118:25: error: use of undeclared identifier 'd_58'
+        d_59  =  d_56 + d_58;
+                        ^
+2:119:23: error: use of undeclared identifier 'd_59'
+        d_3[i_48]  =  d_59;
+                      ^
+2:120:9: error: use of undeclared identifier 'd_56'; did you mean 'd_36'?
+        d_56  =  d_59;
+        ^~~~
+        d_36
+2:5:10: note: 'd_36' declared here
+  double d_36, d_21, d_37, d_34, d_62, d_42, d_58, d_27, d_59, d_56; 
+         ^
+2:120:18: error: use of undeclared identifier 'd_59'
+        d_56  =  d_59;
+                 ^
+2:136:7: error: use of undeclared identifier 'd_62'; did you mean 'd_2'?
+      d_62  =  d_3[i_48];
+      ^~~~
+      d_2
+2:16:18: note: 'd_2' declared here
+  __local double d_2[128];
+                 ^
+2:142:19: error: use of type 'double' requires cl_khr_fp64 extension to be enabled
+      *((__global double *) ul_67)  =  d_62;
+                  ^
+2:142:40: error: use of undeclared identifier 'd_62'
+      *((__global double *) ul_67)  =  d_62;
+                                       ^

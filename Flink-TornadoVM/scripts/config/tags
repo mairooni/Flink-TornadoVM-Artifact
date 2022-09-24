@@ -1,0 +1,4 @@
+start
+stop
+restart
+deploy-tornado

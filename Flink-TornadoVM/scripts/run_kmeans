@@ -1,0 +1,11 @@
+#!/bin/bash
+
+./bin/start-cluster.sh
+
+for i in {1..10} 
+do
+	echo $i"# RUN"
+	./bin/flink run examples/batch/KMeans.jar --data "/home/mary/Downloads/datasets_kmeans/"$1"_2.txt" --parallelism $2
+done
+./bin/stop-cluster.sh
+

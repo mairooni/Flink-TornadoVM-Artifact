@@ -1,0 +1,3 @@
+<kernel>:21:5: error: use of undeclared identifier 'slots'
+    slots[0] = (ulong) -26891;
+    ^

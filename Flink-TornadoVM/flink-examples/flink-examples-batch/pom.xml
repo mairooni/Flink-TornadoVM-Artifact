@@ -1,0 +1,1255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.apache.flink</groupId>
+		<artifactId>flink-examples</artifactId>
+		<version>1.11.1</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>flink-examples-batch_${scala.binary.version}</artifactId>
+	<name>flink-examples-batch</name>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-java</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-scala_${scala.binary.version}</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-clients_${scala.binary.version}</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openjdk.jol</groupId>
+			<artifactId>jol-core</artifactId>
+			<version>0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jcuda</groupId>
+			<artifactId>jcuda</artifactId>
+			<version>0.9.0d</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.jcuda</groupId>
+			<artifactId>jcublas</artifactId>
+			<version>0.9.0d</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
+	
+	
+	<build>
+		<plugins>
+
+			<!-- Scala Compiler -->
+			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>scala-maven-plugin</artifactId>
+				<executions>
+					<!-- Run scala compiler in the process-resources phase, so that dependencies on
+						scala classes can be resolved later in the (Java) compile phase -->
+					<execution>
+						<id>scala-compile-first</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<jvmArgs>
+						<jvmArg>-Xms128m</jvmArg>
+						<jvmArg>-Xmx512m</jvmArg>
+					</jvmArgs>
+				</configuration>
+			</plugin>
+
+			<!-- Eclipse Integration -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.8</version>
+				<configuration>
+					<downloadSources>true</downloadSources>
+					<projectnatures>
+						<projectnature>org.scala-ide.sdt.core.scalanature</projectnature>
+						<projectnature>org.eclipse.jdt.core.javanature</projectnature>
+					</projectnatures>
+					<buildcommands>
+						<buildcommand>org.scala-ide.sdt.core.scalabuilder</buildcommand>
+					</buildcommands>
+					<classpathContainers>
+						<classpathContainer>org.scala-ide.sdt.launching.SCALA_CONTAINER</classpathContainer>
+						<classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER</classpathContainer>
+					</classpathContainers>
+					<excludes>
+						<exclude>org.scala-lang:scala-library</exclude>
+						<exclude>org.scala-lang:scala-compiler</exclude>
+					</excludes>
+					<sourceIncludes>
+						<sourceInclude>**/*.scala</sourceInclude>
+						<sourceInclude>**/*.java</sourceInclude>
+					</sourceIncludes>
+				</configuration>
+			</plugin>
+
+			<!-- Adding scala source directories to build path -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<!-- Add src/main/scala to eclipse build path -->
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/main/scala</source>
+							</sources>
+						</configuration>
+					</execution>
+					<!-- Add src/test/scala to eclipse build path -->
+					<execution>
+						<id>add-test-source</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/test/scala</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Scala Code Style, most of the configuration done via plugin management -->
+			<plugin>
+				<groupId>org.scalastyle</groupId>
+				<artifactId>scalastyle-maven-plugin</artifactId>
+				<configuration>
+					<configLocation>${project.basedir}/../../tools/maven/scalastyle-config.xml</configLocation>
+				</configuration>
+			</plugin>
+			
+			<!-- create the example JAR files -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+				
+					<!-- KMeans -->
+					<execution>
+						<id>KMeans</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+
+						<configuration>
+							<classifier>KMeans</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.clustering.KMeans</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/clustering/KMeans.class</include>
+								<include>**/java/clustering/KMeans$*.class</include>
+								<include>**/java/clustering/util/KMeansDataGenerator.class</include>
+								<include>**/java/clustering/util/KMeansData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- Transitive Closure -->
+					<execution>
+						<id>TransitiveClosure</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TransitiveClosure</classifier>
+				
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.graph.TransitiveClosureNaive</program-class>
+								</manifestEntries>
+							</archive>
+				
+							<includes>
+								<include>**/java/graph/TransitiveClosureNaive.class</include>
+								<include>**/java/graph/TransitiveClosureNaive$*.class</include>
+								<include>**/java/graph/util/ConnectedComponentsData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- Connected Components -->
+					<execution>
+						<id>ConnectedComponents</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>ConnectedComponents</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.graph.ConnectedComponents</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/graph/ConnectedComponents.class</include>
+								<include>**/java/graph/ConnectedComponents$*.class</include>
+								<include>**/java/graph/util/ConnectedComponentsData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+					
+					<!-- EnumTriangles Basic -->
+					<execution>
+						<id>EnumTriangles</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>EnumTriangles</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.graph.EnumTriangles</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/graph/EnumTriangles.class</include>
+								<include>**/java/graph/EnumTriangles$*.class</include>
+								<include>**/java/graph/util/EnumTrianglesDataTypes.class</include>
+								<include>**/java/graph/util/EnumTrianglesDataTypes$*.class</include>
+								<include>**/java/graph/util/EnumTrianglesData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+					
+					<!-- PageRank -->
+					<execution>
+						<id>PageRank</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>PageRank</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.graph.PageRank</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/graph/PageRank.class</include>
+								<include>**/java/graph/PageRank$*.class</include>
+								<include>**/java/graph/util/PageRankData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- WebLogAnalysis -->
+					<execution>
+						<id>WebLogAnalysis</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>WebLogAnalysis</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.relational.WebLogAnalysis</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/relational/WebLogAnalysis.class</include>
+								<include>**/java/relational/WebLogAnalysis$*.class</include>
+								<include>**/java/relational/util/WebLogData.class</include>
+								<include>**/java/relational/util/WebLogDataGenerator.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- WordCount -->
+					<execution>
+						<id>WordCount</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>WordCount</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.wordcount.WordCount</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/wordcount/WordCount.class</include>
+								<include>**/java/wordcount/WordCount$*.class</include>
+								<include>**/java/wordcount/util/WordCountData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- Distributed Copy -->
+					<execution>
+						<id>DistCp</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>DistCp</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.distcp.DistCp</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/distcp/*</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- Arrays -->
+					<execution>
+						<id>Arrays</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>Arrays</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.arrays.Arrays</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/arrays/Arrays.class</include>
+								<include>**/java/arrays/Arrays$*.class</include>
+								<include>**/java/arrays/ArrayData.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<!-- TornadoVM -->
+					<execution>
+						<id>Test01</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>Test01</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.Test01</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/Test01.class</include>
+								<include>**/java/tornadovm/Test01*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestCopyIntegers</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestCopyIntegers</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestCopyIntegers</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestCopyIntegers.class</include>
+								<include>**/java/tornadovm/TestCopyIntegers*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestCopyFloats</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestCopyFloats</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestCopyFloats</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestCopyFloats.class</include>
+								<include>**/java/tornadovm/TestCopyFloats*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestCopyDoubles</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestCopyDoubles</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestCopyDoubles</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestCopyDoubles.class</include>
+								<include>**/java/tornadovm/TestCopyDoubles*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestVectorAddition</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestVectorAddition</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestVectorAddition</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestVectorAddition.class</include>
+								<include>**/java/tornadovm/TestVectorAddition*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTupleInt</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTupleInt</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTupleInt</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTupleInt.class</include>
+								<include>**/java/tornadovm/TestTupleInt*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTupleDouble</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTupleDouble</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTupleDouble</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTupleDouble.class</include>
+								<include>**/java/tornadovm/TestTupleDouble*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReductionsIntegers</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReductionsIntegers</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReductionsIntegers</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReductionsIntegers.class</include>
+								<include>**/java/tornadovm/TestReductionsIntegers*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReductionsDoubles</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReductionsDoubles</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReductionsDoubles</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReductionsDoubles.class</include>
+								<include>**/java/tornadovm/TestReductionsDoubles*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReductionsFloats</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReductionsFloats</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReductionsFloats</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReductionsFloats.class</include>
+								<include>**/java/tornadovm/TestReductionsFloats*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReductionsLongs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReductionsLongs</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReductionsLongs</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReductionsLongs.class</include>
+								<include>**/java/tornadovm/TestReductionsLongs*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple2DiffInput</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple2DiffInput</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple2DiffInput</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple2DiffInput.class</include>
+								<include>**/java/tornadovm/TestTuple2DiffInput*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3Integer</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3Integer</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3Integer</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3Integer.class</include>
+								<include>**/java/tornadovm/TestTuple3Integer*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3Double</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3Double</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3Double</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3Double.class</include>
+								<include>**/java/tornadovm/TestTuple3Double*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3DiffInput</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3DiffInput</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3DiffInput</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3DiffInput.class</include>
+								<include>**/java/tornadovm/TestTuple3DiffInput*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3ReturnType</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3ReturnType</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3ReturnType</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3ReturnType.class</include>
+								<include>**/java/tornadovm/TestTuple3ReturnType*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3Tuple3</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3Tuple3</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3Tuple3</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3Tuple3.class</include>
+								<include>**/java/tornadovm/TestTuple3Tuple3*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3DiffOutput</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3DiffOutput</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3DiffOutput</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3DiffOutput.class</include>
+								<include>**/java/tornadovm/TestTuple3DiffOutput*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple4Tuple4</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple4Tuple4</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple4Tuple4</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple4Tuple4.class</include>
+								<include>**/java/tornadovm/TestTuple4Tuple4*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTupleWithArrayField</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTupleWithArrayField</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTupleWithArrayField</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTupleWithArrayField.class</include>
+								<include>**/java/tornadovm/TestTupleWithArrayField*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestTuple3WithArrayField</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestTuple3WithArrayField</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestTuple3WithArrayField</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestTuple3WithArrayField.class</include>
+								<include>**/java/tornadovm/TestTuple3WithArrayField*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReturnTupleWithArrayField</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReturnTupleWithArrayField</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReturnTupleWithArrayField</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReturnTupleWithArrayField.class</include>
+								<include>**/java/tornadovm/TestReturnTupleWithArrayField*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReturnTuple3WithArrayField</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReturnTuple3WithArrayField</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReturnTuple3WithArrayField</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReturnTuple3WithArrayField.class</include>
+								<include>**/java/tornadovm/TestReturnTuple3WithArrayField*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>LRBinary</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>LRBinary</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.exus.LRBinary</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/exus/LRBinary.class</include>
+								<include>**/java/exus/LRBinary*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>LogisticRegression</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>LogisticRegression</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.exus.LogisticRegression</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/exus/LogisticRegression.class</include>
+								<include>**/java/exus/LogisticRegression*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>ExusFlinkTornadoFloat</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>ExusFlinkTornadoFloat</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.exus.ExusFlinkTornadoFloat</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/exus/ExusFlinkTornadoFloat.class</include>
+								<include>**/java/exus/ExusFlinkTornadoFloat*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestMatrixMultiplication</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestMatrixMultiplication</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestMatrixMultiplication</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestMatrixMultiplication.class</include>
+								<include>**/java/tornadovm/TestMatrixMultiplication*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>SparkWorksAllReduce</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>SparkWorksAllReduce</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.SparkWorksAllReduce</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm.SparkWorksAllReduce.class</include>
+								<include>**/java/tornadovm.SparkWorksAllReduce*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestDFT</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestDFT</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestDFT</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestDFT.class</include>
+								<include>**/java/tornadovm/TestDFT*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>IoT</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>IoT</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.IoT</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm.IoT.class</include>
+								<include>**/java/tornadovm.IoT*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestPiEstimation</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestPiEstimation</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestPiEstimation</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestPiEstimation.class</include>
+								<include>**/java/tornadovm/TestPiEstimation*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestReductionsTuple2</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestReductionsTuple2</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestReductionsTuple2</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestReductionsTuple2.class</include>
+								<include>**/java/tornadovm/TestReductionsTuple2*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestAddTwoVectors</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestAddTwoVectors</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestAddTwoVectors</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestAddTwoVectors.class</include>
+								<include>**/java/tornadovm/TestAddTwoVectors*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestAddTwoVectorsFlinkGPU</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestAddTwoVectorsFlinkGPU</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestAddTwoVectorsFlinkGPU</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestAddTwoVectorsFlinkGPU.class</include>
+								<include>**/java/tornadovm/TestAddTwoVectorsFlinkGPU*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestAddTwoVectorsFlinkGPUV2</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestAddTwoVectorsFlinkGPUV2</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestAddTwoVectorsFlinkGPUV2</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestAddTwoVectorsFlinkGPUV2.class</include>
+								<include>**/java/tornadovm/TestAddTwoVectorsFlinkGPUV2*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>TestPiEstimationFlinkGPU</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>TestPiEstimationFlinkGPU</classifier>
+
+							<archive>
+								<manifestEntries>
+									<program-class>org.apache.flink.examples.java.tornadovm.TestPiEstimationFlinkGPU</program-class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/java/tornadovm/TestPiEstimationFlinkGPU.class</include>
+								<include>**/java/tornadovm/TestPiEstimationFlinkGPU*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+
+				</executions>
+			</plugin>
+
+			<!--simplify the name of example JARs for build-target/examples -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>rename</id>
+						<configuration>
+							<target>
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-KMeans.jar" tofile="${project.basedir}/target/KMeans.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-ConnectedComponents.jar" tofile="${project.basedir}/target/ConnectedComponents.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-EnumTriangles.jar" tofile="${project.basedir}/target/EnumTriangles.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-PageRank.jar" tofile="${project.basedir}/target/PageRank.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TransitiveClosure.jar" tofile="${project.basedir}/target/TransitiveClosure.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-WebLogAnalysis.jar" tofile="${project.basedir}/target/WebLogAnalysis.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-WordCount.jar" tofile="${project.basedir}/target/WordCount.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-DistCp.jar" tofile="${project.basedir}/target/DistCp.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-Arrays.jar" tofile="${project.basedir}/target/Arrays.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-Test01.jar" tofile="${project.basedir}/target/TornadoVM.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestCopyIntegers.jar" tofile="${project.basedir}/target/TestCopyIntegers.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestCopyFloats.jar" tofile="${project.basedir}/target/TestCopyFloats.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestCopyDoubles.jar" tofile="${project.basedir}/target/TestCopyDoubles.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestVectorAddition.jar" tofile="${project.basedir}/target/TestVectorAddition.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTupleInt.jar" tofile="${project.basedir}/target/TestTupleInt.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTupleDouble.jar" tofile="${project.basedir}/target/TestTupleDouble.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReductionsIntegers.jar" tofile="${project.basedir}/target/TestReductionsIntegers.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReductionsDoubles.jar" tofile="${project.basedir}/target/TestReductionsDoubles.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReductionsFloats.jar" tofile="${project.basedir}/target/TestReductionsFloats.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReductionsLongs.jar" tofile="${project.basedir}/target/TestReductionsLongs.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple2DiffInput.jar" tofile="${project.basedir}/target/TestTuple2DiffInput.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3Integer.jar" tofile="${project.basedir}/target/TestTuple3Integer.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3Double.jar" tofile="${project.basedir}/target/TestTuple3Double.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3DiffInput.jar" tofile="${project.basedir}/target/TestTuple3DiffInput.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3DiffOutput.jar" tofile="${project.basedir}/target/TestTuple3DiffOutput.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple4Tuple4.jar" tofile="${project.basedir}/target/TestTuple4Tuple4.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3ReturnType.jar" tofile="${project.basedir}/target/TestTuple3ReturnType.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3Tuple3.jar" tofile="${project.basedir}/target/TestTuple3Tuple3.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTupleWithArrayField.jar" tofile="${project.basedir}/target/TestTupleWithArrayField.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestTuple3WithArrayField.jar" tofile="${project.basedir}/target/TestTuple3WithArrayField.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReturnTupleWithArrayField.jar" tofile="${project.basedir}/target/TestReturnTupleWithArrayField.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReturnTuple3WithArrayField.jar" tofile="${project.basedir}/target/TestReturnTuple3WithArrayField.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-LRBinary.jar" tofile="${project.basedir}/target/LRBinary.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-SparkWorksAllReduce.jar" tofile="${project.basedir}/target/SparkWorksAllReduce.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-LogisticRegression.jar" tofile="${project.basedir}/target/LogisticRegression.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-ExusFlinkTornadoFloat.jar" tofile="${project.basedir}/target/ExusFlinkTornadoFloat.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestMatrixMultiplication.jar" tofile="${project.basedir}/target/TestMatrixMultiplication.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestDFT.jar" tofile="${project.basedir}/target/TestDFT.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-IoT.jar" tofile="${project.basedir}/target/IoT.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestPiEstimation.jar" tofile="${project.basedir}/target/TestPiEstimation.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestReductionsTuple2.jar" tofile="${project.basedir}/target/TestReductionsTuple2.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestAddTwoVectors.jar" tofile="${project.basedir}/target/TestAddTwoVectors.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestAddTwoVectorsFlinkGPU.jar" tofile="${project.basedir}/target/TestAddTwoVectorsFlinkGPU.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestAddTwoVectorsFlinkGPUV2.jar" tofile="${project.basedir}/target/TestAddTwoVectorsFlinkGPUV2.jar" />
+								<copy file="${project.basedir}/target/flink-examples-batch_${scala.binary.version}-${project.version}-TestPiEstimationFlinkGPU.jar" tofile="${project.basedir}/target/TestPiEstimationFlinkGPU.jar" />
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

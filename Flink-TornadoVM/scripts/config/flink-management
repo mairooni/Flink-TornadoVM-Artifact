@@ -1,0 +1,18 @@
+_flink-management() 
+{
+
+    local cur
+    COMPREPLY=()
+    #Variable to hold the current word
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    #Build a list of our keywords for auto-completion using
+    #the tags file
+    local tags=$(for t in `cat /usr/share/flink-tornado/tags | \
+                      awk '{print $1}'`; do echo ${t}; done)
+
+    #Generate possible matches and store them in the
+    #array variable COMPREPLY
+    COMPREPLY=($(compgen -W "${tags}" $cur))
+}
+complete -F _flink-management flink-management

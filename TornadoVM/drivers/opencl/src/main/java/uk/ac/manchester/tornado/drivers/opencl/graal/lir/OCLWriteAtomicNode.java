@@ -1,0 +1,176 @@
+/*
+ * This file is part of Tornado: A heterogeneous programming framework:
+ * https://github.com/beehive-lab/tornadovm
+ *
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
+ * Copyright (c) 2013-2020, APT Group, Department of Computer Science,
+ * The University of Manchester. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Authors: James Clarkson
+ *
+ */
+
+package uk.ac.manchester.tornado.drivers.opencl.graal.lir;
+
+import static uk.ac.manchester.tornado.api.exceptions.TornadoInternalError.unimplemented;
+
+import org.graalvm.compiler.core.common.LIRKind;
+import org.graalvm.compiler.core.common.type.Stamp;
+import org.graalvm.compiler.graph.NodeClass;
+import org.graalvm.compiler.graph.iterators.NodeIterable;
+import org.graalvm.compiler.nodeinfo.InputType;
+import org.graalvm.compiler.nodeinfo.NodeInfo;
+import org.graalvm.compiler.nodes.FrameState;
+import org.graalvm.compiler.nodes.NodeView;
+import org.graalvm.compiler.nodes.ValueNode;
+import org.graalvm.compiler.nodes.memory.AbstractWriteNode;
+import org.graalvm.compiler.nodes.memory.FixedAccessNode;
+import org.graalvm.compiler.nodes.memory.LIRLowerableAccess;
+import org.graalvm.compiler.nodes.memory.address.AddressNode;
+import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
+import org.graalvm.word.LocationIdentity;
+
+import jdk.vm.ci.meta.JavaKind;
+import uk.ac.manchester.tornado.drivers.opencl.graal.OCLStamp;
+
+/**
+ * Writes a given {@linkplain #value() value} a {@linkplain FixedAccessNode
+ * memory location}.
+ */
+@NodeInfo(nameTemplate = "OCLAtomicWrite#{p#location/s}")
+public class OCLWriteAtomicNode extends AbstractWriteNode implements LIRLowerableAccess {
+
+    @Input(InputType.Association) private AddressNode address;
+    @Input private ValueNode accumulator;
+    private Stamp accStamp;
+    private JavaKind elementKind;
+    private ATOMIC_OPERATION operation;
+
+    //@formatter:off
+    public enum ATOMIC_OPERATION {
+        ADD,  
+        MUL, 
+        MAX,
+        MIN,
+        SUB,
+        CUSTOM;
+    }
+    //@formatter:on
+
+    public static final NodeClass<OCLWriteAtomicNode> TYPE = NodeClass.create(OCLWriteAtomicNode.class);
+
+    public OCLWriteAtomicNode(AddressNode address, LocationIdentity location, ValueNode value, BarrierType barrierType, ValueNode acc, Stamp accStamp, JavaKind elementKind,
+            ATOMIC_OPERATION operation) {
+        super(TYPE, address, location, value, barrierType);
+
+        this.address = address;
+        this.accumulator = acc;
+        this.accStamp = accStamp;
+        this.elementKind = elementKind;
+        this.operation = operation;
+    }
+
+    protected OCLWriteAtomicNode(NodeClass<? extends OCLWriteAtomicNode> c, AddressNode address, LocationIdentity location, ValueNode value, BarrierType barrierType) {
+        super(c, address, location, value, barrierType);
+        this.address = address;
+    }
+
+    @Override
+    public Stamp getAccessStamp(NodeView view) {
+        return value().stamp(view);
+    }
+
+    public OCLStamp getStampInt() {
+        OCLStamp oclStamp = null;
+        switch (operation) {
+            case ADD:
+                oclStamp = new OCLStamp(OCLKind.ATOMIC_ADD_INT);
+                break;
+            case MUL:
+                oclStamp = new OCLStamp(OCLKind.ATOMIC_MUL_INT);
+                break;
+            default:
+                throw new RuntimeException("Operation for reduction not supported yet: " + operation);
+        }
+        return oclStamp;
+    }
+
+    public OCLStamp getStampFloat() {
+        OCLStamp oclStamp = null;
+        switch (operation) {
+            case ADD:
+                oclStamp = new OCLStamp(OCLKind.ATOMIC_ADD_FLOAT);
+                break;
+            default:
+                throw new RuntimeException("Operation for reduction not supported yet: " + operation);
+        }
+        return oclStamp;
+    }
+
+    public static void store() {
+
+    }
+
+    @Override
+    public void generate(NodeLIRBuilderTool gen) {
+
+        // New OpenCL nodes for atomic add
+        OCLStamp oclStamp = null;
+        switch (elementKind) {
+            case Int:
+                oclStamp = getStampInt();
+                break;
+            case Long:
+                // DUE TO UNSUPPORTED FEATURE IN INTEL OpenCL PLATFORM
+                oclStamp = new OCLStamp(OCLKind.ATOMIC_ADD_INT);
+                break;
+            case Float:
+                oclStamp = getStampFloat();
+                break;
+            default:
+                throw new RuntimeException("Data type for reduction not supported yet: " + elementKind);
+        }
+
+        LIRKind writeKind = gen.getLIRGeneratorTool().getLIRKind(oclStamp);
+        LIRKind accKind = gen.getLIRGeneratorTool().getLIRKind(accStamp);
+
+        // Atomic Store
+        gen.getLIRGeneratorTool().getArithmetic().emitStore(writeKind, gen.operand(address), gen.operand(value()), gen.state(this));
+
+        // Update the accumulator
+        gen.getLIRGeneratorTool().getArithmetic().emitStore(accKind, gen.operand(accumulator), gen.operand(value()), gen.state(this));
+    }
+
+    @Override
+    public boolean canNullCheck() {
+        return true;
+    }
+
+    @Override
+    public LocationIdentity getKilledLocationIdentity() {
+        unimplemented();
+        return null;
+    }
+
+    @Override
+    public NodeIterable<FrameState> states() {
+        unimplemented();
+        return null;
+    }
+}
