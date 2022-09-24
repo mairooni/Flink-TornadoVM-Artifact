@@ -28,7 +28,7 @@ First export the `TORNADO_ROOT` variable to your TornadoVM installation director
 export TORNADO_ROOT=path/to/Flink-TornadoVM-Artifact/TornadoVM
 ```
 
-Then run the `flink-management` script, located in the `scripts`, directory with the argument `deploy-tornado`.
+Then run the `flink-management` script, located in the `Flink-TornadoVM/scripts`, directory with the argument `deploy-tornado`.
 
 ```bash
 $ ./scripts/flink-management deploy-tornado
@@ -80,11 +80,11 @@ Driver: OpenCL
 
 1. Execute `tornado --printFlags` and copy all flags starting from `-server`. 
  
-2. Then paste the above flags in the `env.java.opts` field of the `flink-conf.yaml` file, which is located in the `Flink-TornadoVM-Artifact/Flink-TornadoVM/build-target/conf` directory. To indicate that the execution will go through TornadoVM, include also the flag `-Dtornado=true` . 
+2. Then paste the above flags in the `env.java.opts` field of the `flink-conf.yaml` file, which is located in the `Flink-TornadoVM/build-target/conf` directory. To indicate that the execution will go through TornadoVM, also include the flag `-Dtornado=true` . 
 
 3. Finally, to specify on which device the computation will be executed include the option `-D<task_schedule-name>.<task-name>.device=<driverNumber>:<deviceNumber>`.
 
-Below is presented an example of the `env.java.opts` field, if we assume that the computation to be executed has two Task Schedules, named s0.t0 and s1.t1 respectively. Let's also assume that both Task Schedules should be executed on the device 0:2 (which was a Quadro GP100 GPU in the example presented in the section **Identify the hardware accelerators**.) 
+Below is presented an example of the `env.java.opts` field, if we assume that the computation to be executed has two Task Schedules, named s0.t0 and s1.t1 respectively. Let's also assume that both Task Schedules should be executed on the device 0:2 (which was a Quadro GP100 GPU in the example presented in the section **"Identify the hardware accelerators"**.) 
 ```bash
     ## Set the Java Home
     env.java.home: path/to/JDK1.8.0_302
@@ -119,7 +119,7 @@ env.java.opts: "... -Xmx65G -Xms65G"
 If tornado runs out of heap, you can increase its heap size by configuring the `-Dtornado.heap.allocation` flag (e.g `-Dtornado.heap.allocation=2048MB`)
 
 ### Flink-GPU setup
-One of the experiments presented in the paper was to compare Flink-TornadoVM against Flink's current support for GPU execution (hereafter refered to as *Flink-GPU*).
+One of the experiments presented in the paper was to compare Flink-TornadoVM against Flink's current support for GPU execution (hereafter referred to as *Flink-GPU*).
 Detailed information about Flink-GPU can be found here: https://flink.apache.org/news/2020/08/06/external-resource.html. 
  
 To run Flink-GPU the following options should be included in the `flink-conf.yaml` file:
@@ -137,7 +137,7 @@ external-resource.gpu.param.discovery-script.args: --enable-coordination
 The `-Dtornado` flag should be set to false. 
 
 The CUDA version used for this evaluation was 9.0.176, with the corresponding version of JCuda being 0.9.0d (downloaded from http://javagl.de/jcuda.org/downloads/downloads.html). 
-The JCuda jar files have to be downloaded and stored in the "build-target/lib" folder. 
+The JCuda jar files have to be stored in the "build-target/lib" folder. 
 
 JCuda and JCublas are linked to the project through the flink-examples-batch/pom.xml file as shown below.
 
@@ -171,7 +171,7 @@ I) Flink-TornadoVM vs Flink Scale-out
 * Logistic Regression (GPU acceleration)
 * IoT use case (GPU acceleration) 
 
-In all of the five experiments above, the baseline (Flink-CPU) was executed using 6 configurations. Each configuration was chosen by including in the `flink_conf.yaml file` the options below:
+In all of the five experiments above, the baseline (Flink-CPU) was executed using 6 configurations. Each configuration was specified by including the options below in the `flink_conf.yaml` file:
 
 -  1 Task Manager Node - 1 Task Slot - 1 Parallel Thread
     
@@ -272,8 +272,8 @@ Download (https://drive.google.com/file/d/1F_1X3aH89pK7V13nSURiv33fXVq9yjL0/view
 ```bash
 tar -xf Datasets-Scripts.tar.xz
 ```
-### Matrix Multiplications
-1. The datasets are in directory `Matrix_Multiplication/matrix_datasets`.
+### Matrix Multiplication
+1. The datasets are in the directory `Matrix_Multiplication/matrix_datasets`.
 
 2. Script to run: Copy the script `run-matrix.sh`, which resides in the `Matrix_Multiplication` directory, to the `Flink-TornadoVM/build-target` folder. Edit the script to use the appropriate path for the datasets. Run the script with four arguments,  i) the parallelism, ii) the number of task managers, (iii) Flink or Flink-TornadoVM and, (iv) input size
 E.g. 
@@ -284,7 +284,7 @@ E.g.
 3. Execution Device: This use case has only one Task Schedule, identified as `t0.s0`, so in the `env.java.opts` field include the flag `-Ds0.t0.device=<driverNumber>:<deviceNumber>` to execute it on the apppropriate device. 
 
  * GPU Execution: Select the GPU driver for the task schedule and set the flag `-Dtornado` to true.
- * FPGA Execution: Select the FPGA driver for the task schedule and set the flag `-Dtornado` to true. Follow the instructions in the file `7_FPGA.md` to set up the FPGA configuration file. Then copy the `TornadoVM/etc` directory, which includes the FPGA configuration file, in the `Flink-TornadoVM/build-target` folder. Initially, the FPGA bitstreams must be generated (JIT Mode). For each bitstream this process should take 2 hours approximately. The generated bitstream resides in the directory specified in the FPGA configuration file. A bistream should be generated for each dataset (128x128, 256x256, 512x512). 
+ * FPGA Execution: Select the FPGA driver for the task schedule and set the flag `-Dtornado` to true. Follow the instructions in the file `FPGA_Execution.md` to set up the FPGA configuration file. Then copy the `TornadoVM/etc` directory, which includes the FPGA configuration file, in the `Flink-TornadoVM/build-target` folder. Initially, the FPGA bitstreams must be generated (JIT Mode). For each bitstream this process should take 2 hours approximately. The generated bitstream resides in the directory specified in the FPGA configuration file. A bistream should be generated for each dataset (128x128, 256x256, 512x512). 
  The bitstreams can be used for ahead-of-time execution to evaluate performance.
  * CPU Execution: Set the flag `-Dtornado` to false.
  
@@ -314,7 +314,7 @@ E.g.
 ```
 
 3. Execution Device: This use case has only one Task Schedule, identified as `t0.s0`, so in the `env.java.opts` field include the flag `-Ds0.t0.device=<driverNumber>:<deviceNumber>` to execute it on the apppropriate device. 
- * FPGA Execution: Select the FPGA driver for the task schedule and set the flag `-Dtornado` to true. Follow the instructions in the file `7_FPGA.md` to set up the FPGA configuration file. Then copy the `TornadoVM/etc` directory, which includes the FPGA configuration file, in the `Flink-TornadoVM/build-target` folder. Initially, the FPGA bitstreams must be generated (JIT Mode). For each bitstream this process should take 2 hours approximately. The generated bitstream resides in the directory specified in the FPGA configuration file. A bistream should be generated for each dataset (2048, 4096, 8192, 16384, 32768, 65536). 
+ * FPGA Execution: Select the FPGA driver for the task schedule and set the flag `-Dtornado` to true. Follow the instructions in the file `FPGA_Execution.md` to set up the FPGA configuration file. Then copy the `TornadoVM/etc` directory, which includes the FPGA configuration file, in the `Flink-TornadoVM/build-target` folder. Initially, the FPGA bitstreams must be generated (JIT Mode). For each bitstream this process should take 2 hours approximately. The generated bitstream resides in the directory specified in the FPGA configuration file. A bistream should be generated for each dataset (2048, 4096, 8192, 16384, 32768, 65536). 
  The bitstreams can be used for ahead-of-time execution to evaluate performance.
  * CPU Execution: Set the flag `-Dtornado` to false.
  
@@ -336,8 +336,8 @@ E.g.
 
 5. Additional evaluation: 
 The evaluation for this experiment includes two additional experiments, (a) a breakdown analysis and, (b) the evaluation of the execution on different dataset sizes. 
-(a) For the breakdown analysis include the option `-Dflinktornado.breakdown=true`
-(b) The additional datasets are in the directory `lr_additional_datasets`. To get the breakdown of the Task Schedule execution make sure to enable the TornadoVM profiler by including the flags `-Dtornado.profiler=True -Dtornado.profiler.dump.dir=FILENAME.json` in the `flink-conf.yaml` file.
+* For the breakdown analysis include the option `-Dflinktornado.breakdown=true`
+* The additional datasets are in the directory `lr_additional_datasets`. To get the breakdown of the Task Schedule execution make sure to enable the TornadoVM profiler by including the flags `-Dtornado.profiler=True -Dtornado.profiler.dump.dir=FILENAME.json` in the `flink-conf.yaml` file.
 Detailed information about the evaluation of these experiments will be provided in the Section **Evaluation** 
 
 ### IoT
@@ -367,7 +367,7 @@ Detailed information about the evaluation of these experiments will be provided 
 	- Flink-GPU 
 		* GPU Execution: Set the flag `-Dtornado` to false. Make sure to follow the steps in the **Flink-GPU setup** section before the execution. 
 
-4. This use case uses precompiled kernels to ensure fair comparison. Therefore, it is necessary to copy the following file from the `precompiled_kernels` to the `build-target/bin` folder:
+4. This use case uses precompiled kernels for the Flink-TornadoVM execution to ensure fair comparison. Therefore, it is necessary to copy the following file from the `precompiled_kernels` to the `build-target/bin` folder:
 	- vadd-map.cl  
 	
 This benchmark additionally requires the flag `-Dprecompiled=true` in the `env.java.opts` field of the `flink-conf.env` file to run the precompiled kernels on the Flink-TornadoVM integration. 
@@ -387,7 +387,7 @@ This benchmark additionally requires the flag `-Dprecompiled=true` in the `env.j
 	- Flink-GPU 
 		* GPU Execution: Set the flag `-Dtornado` to false. Make sure to follow the steps in the **Flink-GPU setup** section before the execution. 
 
-4. This use case uses precompiled kernels to ensure fair comparison. Therefore, it is necessary to copy the following files from the `precompiled_kernels` to the `build-target/bin` folder: 
+4. This use case uses precompiled kernels for the Flink-TornadoVM to ensure fair comparison. Therefore, it is necessary to copy the following files from the `precompiled_kernels` to the `build-target/bin` folder: 
 	- pi-map.cl
 	- pi-reduce.cl
 	- pi-map.ptx
@@ -398,7 +398,7 @@ This benchmark additionally requires the flag `-Dprecompiled=true` in the `env.j
 ## Evaluation
 
 ### End-To-End Speedups
-The end-to-end execution time is the **Job Runtime** outputted by Flink when the execution is completed. 
+The end-to-end execution time is the **Job Runtime** produced by Flink when the execution is completed. 
 E.g., 
 
 ```bash 
@@ -431,7 +431,8 @@ A csv file containing the speedups of Flink-TornadoVM against Flink for all the 
 ### Additional Experiments
 
 1) Breakdown analysis
-To get the breakdown analysis of the Logistic Regression benchmark for 1 Task Manager compile the `BreakdownEvaluation.java`  program (which resides in the Evaluation folder) and run it with the following options:
+
+To get the breakdown analysis of the Logistic Regression benchmark for 1 Task Manager compile the `BreakdownEvaluation.java`  program, which resides in the `Evaluation` folder, and run it with the following options:
 * --log *the Flink Task Manager out file that contains the timers for each computation*
 * --directory *the directory to store the csv files that have the analysis*
 
@@ -442,9 +443,9 @@ java BreakdownEvaluation --log /home/user/flink-taskexecutor-1-silver1.out --dir
 ```
 
 This generates three csv files. The first one, `NumbersFilled.csv`, categorizes the numbers in the flink log per action. 
-The second one, `NumbersFilled-AVG.csv` calculate the average of those numbers. Finally, the third one, `Breakdown-Simplified`, provides a simplified version of the numbers in the `NumbersFilled-AVG.csv` file.  
+The second one, `NumbersFilled-AVG.csv` calculates the average of those numbers. Finally, the third one, `Breakdown-Simplified`, provides a simplified version of the numbers in the `NumbersFilled-AVG.csv` file.  
 
-Note that, as mentioned in the previous section, the flag `` has to be in the java.env.opts in order to get the detailed timers. 
+Note that, as mentioned in the previous section, the flag `-Dflinktornado.breakdown=true` has to be in the java.env.opts in order to get the detailed timers. 
 
 2) TornadoVM Profiler Analysis
 
